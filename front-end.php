@@ -1,0 +1,154 @@
+<?php
+    require_once 'JaduConstants.php';
+
+    $TwitterHandle = <<<JADU_WIDGET_TITLE
+%TITLE%
+JADU_WIDGET_TITLE;
+$TwitterHandle = str_replace('\"', '"', $TwitterHandle);
+$TwitterHandleDiv = str_replace('@', '', $TwitterHandle) . "DIV";
+?>
+<script>
+// Javascript function to dynamically load a JS file within other JS from https://stackoverflow.com/questions/14521108/dynamically-load-js-inside-js
+var cScriptLoader = (function ()
+{
+    function cScriptLoader(files)
+    {
+        var _this = this;
+        this.log = function (t)
+        {
+            console.log("ScriptLoader: " + t);
+        };
+        this.withNoCache = function (filename)
+        {
+            if (filename.indexOf("?") === -1)
+                filename += "?no_cache=" + new Date().getTime();
+            else
+                filename += "&no_cache=" + new Date().getTime();
+            return filename;
+        };
+        this.loadStyle = function (filename)
+        {
+            // HTMLLinkElement
+            var link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.type = "text/css";
+            link.href = _this.withNoCache(filename);
+            _this.log('Loading style ' + filename);
+            link.onload = function ()
+            {
+                _this.log('Loaded style "' + filename + '".');
+            };
+            link.onerror = function ()
+            {
+                _this.log('Error loading style "' + filename + '".');
+            };
+            _this.m_head.appendChild(link);
+        };
+        this.loadScript = function (i)
+        {
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = _this.withNoCache(_this.m_js_files[i]);
+            var loadNextScript = function ()
+            {
+                if (i + 1 < _this.m_js_files.length)
+                {
+                    _this.loadScript(i + 1);
+                }
+            };
+            script.onload = function ()
+            {
+                _this.log('Loaded script "' + _this.m_js_files[i] + '".');
+                loadNextScript();
+            };
+            script.onerror = function ()
+            {
+                _this.log('Error loading script "' + _this.m_js_files[i] + '".');
+                loadNextScript();
+            };
+            _this.log('Loading script "' + _this.m_js_files[i] + '".');
+            _this.m_head.appendChild(script);
+        };
+        this.loadFiles = function ()
+        {
+            // this.log(this.m_css_files);
+            // this.log(this.m_js_files);
+            for (var i = 0; i < _this.m_css_files.length; ++i)
+                _this.loadStyle(_this.m_css_files[i]);
+            _this.loadScript(0);
+        };
+        this.m_js_files = [];
+        this.m_css_files = [];
+        this.m_head = document.getElementsByTagName("head")[0];
+        // this.m_head = document.head; // IE9+ only
+        function endsWith(str, suffix)
+        {
+            if (str === null || suffix === null)
+                return false;
+            return str.indexOf(suffix, str.length - suffix.length) !== -1;
+        }
+        for (var i = 0; i < files.length; ++i)
+        {
+            if (endsWith(files[i], ".css"))
+            {
+                this.m_css_files.push(files[i]);
+            }
+            else if (endsWith(files[i], ".js"))
+            {
+                this.m_js_files.push(files[i]);
+            }
+            else
+                this.log('Error unknown filetype "' + files[i] + '".');
+        }
+    }
+    return cScriptLoader;
+})();
+         
+// Graceful set and read cookie from https://stackoverflow.com/questions/4825683/how-do-i-create-and-read-a-value-from-cookie
+function setCookie(c_name,value,exdays)
+{
+   var exdate=new Date();
+   exdate.setDate(exdate.getDate() + exdays);
+   var c_value=escape(value) + ((exdays==null) ? "" : ("; expires="+exdate.toUTCString()));
+   document.cookie=c_name + "=" + c_value;
+}
+
+function getCookie(c_name)
+{
+   var i,x,y,ARRcookies=document.cookie.split(";");
+   for (i=0; i<ARRcookies.length; i++)
+   {
+      x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+      y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+      x=x.replace(/^\s+|\s+$/g,"");
+      if (x==c_name)
+      {
+        return unescape(y);
+      }
+   }
+}
+
+          function allowThirdParty(theID) {
+            setCookie("allowThirdParty", "Yes", 365);
+            location.reload();
+          }
+          function checkThirdParty(theID) {
+            if(getCookie("allowThirdParty"))
+            {
+              var ScriptLoader = new cScriptLoader(["//platform.twitter.com/widgets.js"]);
+              ScriptLoader.loadFiles();             
+            }
+            else
+            {
+              document.getElementById(theID).innerHTML = "<p>You need to <button onClick=\"allowThirdParty(" + theID + ");\">enable</button> third party cookies to see external content</p>";
+            }
+          }
+ </script>     
+<h2 class="widget__heading">Follow <?=$TwitterHandle;?> on Twitter</h2>
+    <p>
+      <a class="twitter-timeline" data-height="450" href="https://twitter.com/<?php print encodeHtml($TwitterHandle); ?>">Tweets by <?php print encodeHtml($TwitterHandle); ?></a>
+    </p>
+    <div id="<?=$TwitterHandleDiv;?>"></div>
+    <script>
+      checkThirdParty("<?=$TwitterHandleDiv;?>");
+    </script>
